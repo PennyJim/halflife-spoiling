@@ -10,6 +10,8 @@ end)
 local last_tick_halflifed = 0
 ---@type table<uint, table<uint,uint>>
 local entities_halflifed = {}
+---@type table<string, fun(event:EventData.on_script_trigger_effect,item:data.ItemID, entity:LuaEntity)>
+local entity_type = {}
 
 ---@param inventory LuaInventory
 ---@param item data.ItemID
@@ -57,17 +59,7 @@ local function halflife_inventory(inventory, item, last_indexed)
 	return inventory_size
 end
 
-
-function tick_handlers.halflife(event, item)
-	if event.tick ~= last_tick_halflifed then
-		last_tick_halflifed = event.tick
-		entities_halflifed = {}
-	end
-	if not item then error("Cannot halflife without knowing the original item. Please format the effect_id like 'halflife::<item-name>'") end
-
-	local entity = event.source_entity
-	if not entity then return end
-
+entity_type["default"] = function(event, item, entity)
 	local last_indexed = entities_halflifed[entity.unit_number--[[@as uint]]]
 	if not last_indexed then
 		last_indexed = {}
@@ -81,4 +73,20 @@ function tick_handlers.halflife(event, item)
 			last_indexed[i] = halflife_inventory(inventory, item, last_indexed[i] or 1)
 		end
 	end
+end
+
+function tick_handlers.halflife(event, item)
+	if event.tick ~= last_tick_halflifed then
+		last_tick_halflifed = event.tick
+		entities_halflifed = {}
+	end
+	if not item then error("Cannot halflife without knowing the original item. Please format the effect_id like 'halflife::<item-name>'") end
+
+	local entity = event.source_entity
+	if not entity then return end -- It's probably the Editor? just ignore?
+	if not entity.unit_number then return end -- It's probably just an item on the ground. Can't be more than 1 so let spoil naturally
+
+	local half_func = entity_type[entity.type]
+	if not half_func then half_func = entity_type["default"] end
+	half_func(event, item, entity)
 end
