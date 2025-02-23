@@ -13,11 +13,15 @@ local entities_halflifed = {}
 ---@type table<string, fun(event:EventData.on_script_trigger_effect,item:data.ItemID, entity:LuaEntity)>
 local entity_type = {}
 
----@param inventory LuaInventory
+---@param inventory LuaInventory|LuaTransportLine
 ---@param item data.ItemID
 ---@param last_indexed uint
 ---@return uint
 local function halflife_inventory(inventory, item, last_indexed)
+	local inventory_size = #inventory
+	if last_indexed > inventory_size then return last_indexed end
+	-- Check whether it's worth doing anything
+	-- On the chopping block for performance??
 	local contents = inventory.get_contents()
 	local has_halflife = false
 	for _, count in pairs(contents) do
@@ -28,35 +32,44 @@ local function halflife_inventory(inventory, item, last_indexed)
 	end
 	if not has_halflife then return last_indexed end
 
-	local inventory_size = #inventory
-	for i = last_indexed, inventory_size, 1 do
-		local slot = inventory[i]
+	-- Actually replace placeholders
+	local index = last_indexed
+	while index <= inventory_size do
+		local slot = inventory[index]
+		---@type number
+		local count
 		if not slot.valid_for_read then goto continue end
 		if slot.name ~= "halflife-placeholder" then
 			if slot.spoil_tick >= last_tick_halflifed then goto continue end
 			local spoil_result = prototypes.item[slot.name].spoil_result
 			if spoil_result and spoil_result.name == "halflife-placeholder" then
-				return i
+				break
 			else
 				goto continue
 			end
 		end
 
-		local count = slot.count / 2
+		count = slot.count / 2
 		if count < 1 then
 			slot.clear()
-			goto continue
+			if inventory.object_name == "LuaTransportLine" then
+				inventory_size = inventory_size - 1
+				index = index - 1
+			end
+		else
+			slot.set_stack{
+				name = item,
+				quality = slot.quality,
+				count = count
+			}
 		end
 
-		slot.set_stack{
-			name = item,
-			quality = slot.quality,
-			count = count
-		}
-
 		::continue::
+		index = index + 1
 	end
-	return inventory_size
+
+	-- Update what index was last used
+	return index
 end
 
 entity_type["default"] = function(event, item, entity)
@@ -74,6 +87,23 @@ entity_type["default"] = function(event, item, entity)
 		end
 	end
 end
+
+entity_type["transport-belt"] = function (event, item, entity)
+	local last_indexed = entities_halflifed[entity.unit_number--[[@as uint]]]
+	if not last_indexed then
+		last_indexed = {}
+		entities_halflifed[entity.unit_number--[[@as uint]]] = last_indexed
+	end
+
+	for i = 1, entity.get_max_transport_line_index() do
+---@diagnostic disable-next-line: param-type-mismatch
+		local transport = entity.get_transport_line(i)
+		last_indexed[i] = halflife_inventory(transport, item, last_indexed[i] or 1)
+	end
+end
+entity_type["underground-belt"] = entity_type["transport-belt"]
+entity_type["splitter"] = entity_type["transport-belt"]
+entity_type["loader"] = entity_type["transport-belt"]
 
 function tick_handlers.halflife(event, item)
 	if event.tick ~= last_tick_halflifed then
