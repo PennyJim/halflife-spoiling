@@ -1,9 +1,9 @@
 -- FOR TESTING
 local coin = data.raw["item"]["coin"]
-coin.spoil_ticks = 30
+coin.spoil_ticks = 60
 coin.spoil_result = "halflife-placeholder"
 coin.spoil_to_trigger_result = {
-	items_per_trigger = 1,
+	items_per_trigger = 2,
 	trigger = {
 		type = "direct",
 		action_delivery = {
