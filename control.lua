@@ -105,6 +105,21 @@ entity_type["underground-belt"] = entity_type["transport-belt"]
 entity_type["splitter"] = entity_type["transport-belt"]
 entity_type["loader"] = entity_type["transport-belt"]
 
+entity_type["inserter"] = function (event, item, entity)
+	local stack = entity.held_stack
+	if stack.name ~= "halflife-placeholder" then return end
+	local count = stack.count / 2
+	if count >= 1 then
+		stack.set_stack{
+			name = item,
+			count = count,
+			quality = stack.quality,
+		}
+	else
+		stack.clear()
+	end
+end
+
 function tick_handlers.halflife(event, item)
 	if event.tick ~= last_tick_halflifed then
 		last_tick_halflifed = event.tick
