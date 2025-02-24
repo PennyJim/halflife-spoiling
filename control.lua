@@ -82,10 +82,11 @@ local function halflife_inventory(inventory, item, last_indexed)
 end
 
 entity_type["default"] = function(event, item, entity)
-	local last_indexed = entities_halflifed[entity.unit_number--[[@as uint]]]
+	local unit_number = entity.unit_number--[[@as uint]]
+	local last_indexed = entities_halflifed[unit_number]
 	if not last_indexed then
 		last_indexed = {}
-		entities_halflifed[entity.unit_number--[[@as uint]]] = last_indexed
+		entities_halflifed[unit_number] = last_indexed
 	end
 
 	for i = 1, entity.get_max_inventory_index() do
@@ -98,10 +99,11 @@ entity_type["default"] = function(event, item, entity)
 end
 
 entity_type["transport-belt"] = function (event, item, entity)
-	local last_indexed = entities_halflifed[entity.unit_number--[[@as uint]]]
+	local unit_number = entity.unit_number--[[@as uint]]
+	local last_indexed = entities_halflifed[unit_number]
 	if not last_indexed then
 		last_indexed = {}
-		entities_halflifed[entity.unit_number--[[@as uint]]] = last_indexed
+		entities_halflifed[unit_number] = last_indexed
 	end
 
 	for i = 1, entity.get_max_transport_line_index() do
