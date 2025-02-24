@@ -92,7 +92,7 @@ function add_halflife(item, ticks, binning)
 	end
 
 	table.insert(new_icons, {
-		icon = "__halflife-spoiling__/graphics/icons/halflife.png",
+		icon = "__halflife-spoiling__/graphics/icons/halflife-overlay.png",
 		icon_size = 64,
 	})
 
