@@ -7,6 +7,15 @@ script.on_event(defines.events.on_script_trigger_effect, function (event)
 	if func then return func(event, param) end
 end)
 
+--- A lookup for if an item is one of our placeholders
+---@type table<data.ItemID, true>
+local is_placeholder = {}
+for item in pairs(prototypes.get_item_filtered{
+	{filter = "subgroup", subgroup = "halflife-placeholder"}
+}) do
+	is_placeholder[item] = true
+end
+
 local last_tick_halflifed = 0
 ---@type table<uint, table<uint,uint>>
 local entities_halflifed = {}
@@ -25,7 +34,7 @@ local function halflife_inventory(inventory, item, last_indexed)
 	local contents = inventory.get_contents()
 	local has_halflife = false
 	for _, count in pairs(contents) do
-		if count.name == "halflife-placeholder" then
+		if is_placeholder[count.name] then
 			has_halflife = true
 			break
 		end
@@ -39,10 +48,10 @@ local function halflife_inventory(inventory, item, last_indexed)
 		---@type number
 		local count
 		if not slot.valid_for_read then goto continue end
-		if slot.name ~= "halflife-placeholder" then
+		if not is_placeholder[slot.name] then
 			if slot.spoil_tick >= last_tick_halflifed then goto continue end
 			local spoil_result = prototypes.item[slot.name].spoil_result
-			if spoil_result and spoil_result.name == "halflife-placeholder" then
+			if spoil_result and is_placeholder[spoil_result.name] then
 				break
 			else
 				goto continue
@@ -106,8 +115,8 @@ entity_type["splitter"] = entity_type["transport-belt"]
 entity_type["loader"] = entity_type["transport-belt"]
 
 entity_type["inserter"] = function (event, item, entity)
-	local stack = entity.held_stack
-	if stack.name ~= "halflife-placeholder" then return end
+	local stack = entity.held_stack -- Might need to check if it's valid for read?
+	if not is_placeholder[stack.name] then return end
 	local count = stack.count / 2
 	if count >= 1 then
 		stack.set_stack{
