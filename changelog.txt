@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.0.2
+Date: ????
+  Changes:
+    - Use InsertItemTriggerEffectItem instead of all that runtime scripting, does mean it doesn't support quality anymore :P

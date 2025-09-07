@@ -3,6 +3,12 @@ data:extend{
 		type = "item-subgroup",
 		name = "halflife-placeholder",
 		group = "other",
+	},
+	{
+		type = "font",
+		name = "default-superlarge",
+		from = "default",
+		size = 24
 	}
 }
 
@@ -60,28 +66,41 @@ end
 --- Increasing this will reduce the amount of script triggers fired, if the quantity is problematic
 ---@param item data.ItemPrototype
 ---@param ticks uint
----@param binning? uint
 ---@return data.ItemPrototype
-function add_halflife(item, ticks, binning)
-	binning = binning or 2
+function add_halflife(item, ticks)
 	local placeholder_name = "halflife-placeholder-"..item.name
 
 	item.spoil_ticks = ticks
-	item.spoil_result = placeholder_name
+	-- item.spoil_result = placeholder_name -- Just for spoil result comparison sake
 	item.spoil_to_trigger_result = {
-		items_per_trigger = binning,
+		items_per_trigger = 1,
 		trigger = {
 			type = "direct",
 			action_delivery = {
 				type = "instant",
 				source_effects = {
-					type = "script",
-					effect_id = "halflife::"..item.name
+					type = "insert-item",
+					item = placeholder_name,
+					-- repeat_count = 10,
+					probability = 0.5,
 				}
 			}
 		}
 	}
 
+	---@type data.CustomTooltipField
+	local custom_tooltip = {
+		name = {"description.spoil-result"},
+		value = "[font=default-superlarge][item="..placeholder_name.."][/font]\n",
+		order = 255
+	}
+	if not item.custom_tooltip_fields then
+		item.custom_tooltip_fields = {custom_tooltip}
+	else
+		table.insert(item.custom_tooltip_fields, custom_tooltip)
+	end
+
+	--FIXME: What if it inherits the icons from what it places?
 	local new_icons = item.icons
 	if new_icons then
 		new_icons = util.copy(new_icons)
@@ -102,7 +121,8 @@ function add_halflife(item, ticks, binning)
 		icons = new_icons,
 		localised_name = item_locale(item),
 		subgroup = "halflife-placeholder",
-		spoil_ticks = 1, -- I do not want this living for very long if it ever gets out.
+		spoil_ticks = 1,
+		spoil_result = item.name,
 		stack_size = item.stack_size,
 		hidden = true,
 		hidden_in_factoriopedia = true,
