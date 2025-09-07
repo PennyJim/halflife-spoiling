@@ -2,7 +2,7 @@
 	"name": "halflife-spoiling",
 	"title": "Half-Life Spoiling",
 	"description": "An interface to allow mods to make items use the spoil interface to give a halflife to items",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"author": "PennyJim",
 	"factorio_version": "2.0",
 	"spoiling_required": true,
